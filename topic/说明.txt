@@ -1,0 +1,4 @@
+用户话题分类函数test_topic.py中的topic_classfiy函数
+
+add_dict为扩充语料的代码
+test_tfidf为根据语料中词频计算词语的tfidf，去掉tfidf较低的20%的词语

@@ -1,0 +1,7 @@
+global_utils.py  配置文件
+test_code.py 测试文件（仅供测试用）
+protou.py 根据种子用户及其粉丝列表形成种子用户群（训练的时候需要）
+find_users.py 根据uid查询用户的背景信息和粉丝结构
+
+domain_by_text.py 根据用户微博文本进行身份分类
+test_domain_v2.py 用户领域分类主函数
