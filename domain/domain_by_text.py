@@ -46,20 +46,19 @@ def adjust_dict(word_list,domain_dict):#统计不在语料字典里面的词语�
 
     return count
 
-def com_p(word_list,domain_dict,domain_count):
+def com_p(word_list,domain_dict,domain_count,len_dict,total):
 
     p = Decimal(1.0)
     getcontext().prec = 50
     count = adjust_dict(word_list,domain_dict)
     for i in range(0,len(word_list)):
         if domain_dict.has_key(word_list[i]):
-            p1 = Decimal(domain_dict[word_list[i]]+count)/Decimal(domain_count+len(domain_dict)*count)
+            p1 = Decimal((domain_dict[word_list[i]]+count)*len_dict)/Decimal((domain_count+len(domain_dict)*count)*total)
             p = p * p1
         else:
-            p1 = Decimal(1)/Decimal(domain_count+len(domain_dict)*count)
+            p1 = Decimal(1*len_dict)/Decimal((domain_count+len(domain_dict)*count)*total)
             p = p * p1
 
-    p = p * domain_count
     return p
 
 def load_train():
@@ -103,6 +102,12 @@ def domain_classfiy_by_text(user_weibo):#根据用户微博文本进行领域分
     {uid:label1,uid2:label2,...}
     '''
     domain_dict,domain_count = load_train()
+    len_dict = dict()
+    total = 0
+    for k,v in domain_dict.items():
+        len_dict[k] = len(v)
+        total = total + len(v)
+
     sw = load_scws()
     black = load_black_words()
     result_data = dict()
@@ -116,7 +121,7 @@ def domain_classfiy_by_text(user_weibo):#根据用户微博文本进行领域分
                 word_list.append(word[0])
         for d_k in domain_p.keys():
             start_time = time.time()
-            domain_p[d_k] = com_p(word_list,domain_dict[d_k],domain_count[d_k])#计算文档属于每一个类的概率
+            domain_p[d_k] = com_p(word_list,domain_dict[d_k],domain_count[d_k],len_dict[d_k],total)#计算文档属于每一个类的概率
             end_time = time.time()
             print '%s domain takes %s second...' % (d_k,(end_time-start_time))
         label = rank_dict(domain_p)
