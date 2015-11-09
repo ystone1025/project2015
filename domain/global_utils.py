@@ -5,6 +5,7 @@ import re
 import scws
 import redis
 from elasticsearch import Elasticsearch
+from xapian_weibo.xapian_backend import XapianSearch
 
 REDIS_HOST = '219.224.135.97'
 REDIS_PORT = '6380'
@@ -32,17 +33,24 @@ R_DICT = {'0':R_0, '1':R_1, '2':R_2, '3':R_3, '4':R_4, '5':R_5, '6':R_6, '7':R_7
           '8':R_8, '9':R_9, '10':R_10, '11':R_11, '12':R_12, '13':R_13,\
           '14':R_14}
 
+USER_PORTRAIT_ES_HOST = ['219.224.135.93:9200', '219.224.135.94:9200']
 USER_PROFILE_ES_HOST = ['219.224.135.96:9208','219.224.135.97:9208','219.224.135.98:9208']
 es_user_profile = Elasticsearch(USER_PROFILE_ES_HOST, timeout = 60)
+es_user_portrait = Elasticsearch(USER_PORTRAIT_ES_HOST, timeout = 600)
 
 ##加载领域标签
 
 labels = ['university', 'homeadmin', 'abroadadmin', 'homemedia', 'abroadmedia', 'folkorg', \
           'lawyer', 'politician', 'mediaworker', 'activer', 'grassroot', 'other', 'business']
 zh_labels = ['高校', '境内机构', '境外机构', '媒体', '境外媒体', '民间组织', '法律机构及人士', \
-             '政府机构及人士', '媒体人士', '活跃人士', '其他组织', '其他', '商业人士']
+             '政府机构及人士', '媒体人士', '活跃人士', '草根', '其他', '商业人士']
 txt_labels = ['university', 'homeadmin', 'abroadadmin', 'homemedia', 'abroadmedia', 'folkorg', \
           'lawyer', 'politician', 'mediaworker', 'activer', 'grassroot', 'business']
+r_labels = ['university', 'homeadmin', 'abroadadmin', 'homemedia', 'abroadmedia', 'folkorg',]
+outlist = ['海外', '香港', '台湾', '澳门']
+lawyerw = ['律师', '法律', '法务', '辩护']
+STATUS_THRE = 4000
+FOLLOWER_THRE = 1000
 
 ##领域标签加载结束
 
@@ -118,4 +126,31 @@ def load_scws():
     s.set_ignore(IGNORE_PUNCTUATION)
     return s
 
+def cut(s, text, f=None, cx=False):
+    if f:
+        tks = [token for token
+               in s.participle(cut_filter(text))
+               if token[1] in f and (3 < len(token[0]) < 30 or token[0] in single_word_whitelist)]
+    else:
+        tks = [token for token
+               in s.participle(cut_filter(text))
+               if 3 < len(token[0]) < 30 or token[0] in single_word_whitelist]
+    if cx:
+        return tks
+    else:
+        return [tk[0] for tk in tks]
 ##加载分词工具结束
+
+##加载xapian读取用户的认证类型
+XAPIAN_USER_DATA_PATH = '/home/xapian/xapian_user/'
+xs = XapianSearch(path=XAPIAN_USER_DATA_PATH, name='master_timeline_user', schema_version=1)
+
+def read_by_xapian(xs,uid):#根据用户id，去xapian里面查找该用户的背景信息
+
+    count,get_results = xs.search(query={'_id': uid})
+    if count:
+        for r in get_results():
+            return r
+    else:
+        return 'other'
+##加载xapian数据结束

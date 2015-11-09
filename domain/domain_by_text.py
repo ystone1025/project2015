@@ -48,16 +48,14 @@ def adjust_dict(word_list,domain_dict):#统计不在语料字典里面的词语�
 
 def com_p(word_list,domain_dict,domain_count,len_dict,total):
 
-    p = Decimal(1.0)
-    getcontext().prec = 50
-    count = adjust_dict(word_list,domain_dict)
-    for i in range(0,len(word_list)):
-        if domain_dict.has_key(word_list[i]):
-            p1 = Decimal((domain_dict[word_list[i]]+count)*len_dict)/Decimal((domain_count+len(domain_dict)*count)*total)
-            p = p * p1
+    p = 0
+    #count = adjust_dict(word_list,domain_dict)
+    for k,v in word_list.items():
+        if domain_dict.has_key(k):
+            p1 = float(domain_dict[k]*v)/float(domain_count)
+            p = p + p1
         else:
-            p1 = Decimal(1*len_dict)/Decimal((domain_count+len(domain_dict)*count)*total)
-            p = p * p1
+            pass
 
     return p
 
@@ -71,8 +69,8 @@ def load_train():
         count = 0
         for f,w_text in reader:
             f = f.strip('\xef\xbb\xbf')
-            word_dict[str(w_text)] = Decimal(f)
-            count = count + Decimal(f)
+            word_dict[str(w_text)] = float(f)
+            count = count + float(f)
         domain_dict[i] = word_dict
         domain_count[i] = count
 
@@ -92,7 +90,8 @@ def rank_dict(has_word):
         label = txt_labels[txt_labels.index(keyword_data[0][1])]
     else:
         label = 'other'
-    return label
+        keyword_data = keyword.TopK()
+    return label,keyword_data
 
 def domain_classfiy_by_text(user_weibo):#根据用户微博文本进行领域分类
     '''
@@ -111,25 +110,30 @@ def domain_classfiy_by_text(user_weibo):#根据用户微博文本进行领域分
     sw = load_scws()
     black = load_black_words()
     result_data = dict()
+    p_data = dict()
     for k,v in user_weibo.items():
         start = time.time()
         words = sw.participle(v)
         domain_p = start_p()
-        word_list = []
+        word_list = dict()
         for word in words:
-            if (word[1] in cx_dict) and 3 < len(word[0]) < 30 and (word[0] not in black) and (word[0] not in single_word_whitelist) and (word[0] not in word_list):#选择分词结果的名词、动词、形容词，并去掉单个词
-                word_list.append(word[0])
+            if (word[1] in cx_dict) and 3 < len(word[0]) < 30 and (word[0] not in black) and (word[0] not in single_word_whitelist):#选择分词结果的名词、动词、形容词，并去掉单个词
+                if word_list.has_key(word[0]):
+                    word_list[word[0]] = word_list[word[0]] + 1
+                else:
+                    word_list[word[0]] = 1
         for d_k in domain_p.keys():
             start_time = time.time()
             domain_p[d_k] = com_p(word_list,domain_dict[d_k],domain_count[d_k],len_dict[d_k],total)#计算文档属于每一个类的概率
             end_time = time.time()
             print '%s domain takes %s second...' % (d_k,(end_time-start_time))
-        label = rank_dict(domain_p)
+        label,rank_data = rank_dict(domain_p)
         result_data[k] = label
+        p_data[k] = rank_data
         end = time.time()
         print '%s takes %s second...' % (k,(end-start))
 
-    return result_data
+    return result_data,p_data
 
 def test_data():#测试输入
 

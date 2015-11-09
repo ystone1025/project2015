@@ -6,8 +6,9 @@ import scws
 import csv
 import sys
 import json
-from search import search_follower
+from search import search_follower,search_attention
 from search_user_profile import es_get_source
+from global_utils import es_user_profile
 
 zh_text = ['nick_name','rel_name','description','sp_type','user_location']
 
@@ -15,7 +16,9 @@ def find_friends(uids):
 
     friends_list = dict()
     for uid in uids:
-        v = search_follower(uid)
+        #v = search_follower(uid)
+        v_items = search_attention(uid)
+        v = v_items[0]
         item = []
         if not v:
             friends_list[str(uid)] = []
@@ -81,9 +84,9 @@ def readcsv(name):
     return uidlist
 
 def train_data():#训练数据
-    classes = ['university', 'homeadmin', 'abroadadmin', 'homemedia', 'abroadmedia', 'folkorg', \
-          'lawyer', 'politician', 'mediaworker', 'activer', 'grassroot', 'business']
-
+    classes = ['mediaworker', 'activer', 'grassroot', 'business']
+#'university', 'homeadmin', 'abroadadmin', 'homemedia', 'abroadmedia', 'folkorg', \
+#          'lawyer', 'politician', 
     for area in classes:
         print '%s start....' % area
         uidlist = readUidByArea(area)
