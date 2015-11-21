@@ -123,14 +123,7 @@ def rank_result(result_data):
         if count == 0:
             uid_topic[k] = ['life']
         else:
-            if data_v[0][1] == 'life':
-                uid_topic[k] = ['life']
-            elif data_v[1][1] == 'life':
-                uid_topic[k] = [data_v[0][1]]
-            elif data_v[2][1] == 'life':
-                uid_topic[k] = [data_v[0][1],data_v[1][1]]
-            else:
-                uid_topic[k] = [data_v[0][1],data_v[1][1],data_v[2][1]]
+            uid_topic[k] = [data_v[0][1],data_v[1][1],data_v[2][1]]
 
     return uid_topic
 
