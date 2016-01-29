@@ -5,11 +5,11 @@ import csv
 from elasticsearch import Elasticsearch
 
 #查询人物属性的es配置
-USER_PROFILE_ES_HOST = ['219.224.135.91:9200','219.224.135.92:9200','219.224.135.93:9200']
+USER_PROFILE_ES_HOST = ['219.224.134.211:9200','219.224.134.212:9200','219.224.134.213:9200']
 es_user_profile = Elasticsearch(USER_PROFILE_ES_HOST, timeout = 60)
 
 #查询文本的es配置
-TEXT_ES_HOST = ['219.224.135.91:9206','219.224.135.92:9206','219.224.135.93:9206']
+TEXT_ES_HOST = ['219.224.134.211:9206','219.224.134.212:9206','219.224.134.213:9206']
 es_text_profile = Elasticsearch(TEXT_ES_HOST, timeout = 60)
 
 def load_words():
@@ -28,11 +28,17 @@ def load_words():
 WORD_DICT = load_words()
 
 TOPIC_LIST = ['politics','anti-corruption','fear-of-violence','peace','religion']
-EVENT_STA = 700
+EVENT_STA = 500#以一周为单位计算结果
+ZERO_STA = 0.04
+RATE_STA = 0.3
+COUNT_STA = 2#以一周为单位计算结果
 MAX_SIZE = 9999999
 
-SEN_DICT = {1:'冲动',0:'稳定',2:'未知'}
-EVENT_DICT = {1:'批判',0:'中立',2:'未知'}
+SEN_DICT = {1:'冲动',0:'未知',2:'抑郁',3:'冲动抑郁'}
+EVENT_DICT = {1:'批判',0:'未知'}
+
+MIN_TS = 9999999999
+MAX_TS = 1356969600
 
 def cut_filter(text):
     pattern_list = [r'\（分享自 .*\）', r'http://\w*']
@@ -53,7 +59,7 @@ def re_cut(w_text):#根据一些规则把无关内容过滤掉
     w_text = a1.sub('',w_text)
     a1 = re.compile(r'\@.*?\s' )
     w_text = a1.sub('',w_text)
-    if w_text == u'转发微博':
+    if w_text == '转发微博':
         w_text = ''
 
     return w_text

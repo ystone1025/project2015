@@ -30,73 +30,47 @@ def search_profile(uid_list):
        
     return result_list
 
-#根据uid和date查询用户发布的文本
-def search_text(uid_list, date):
+#根据uid和date查询用户发布的文本，此接口表示每条微博的情绪已经计算完成
+def search_text_sentiment(uid_list, date, result):
     '''
     输入：uid列表、时间
     输出：情绪list、文本list
     '''
-    nest_body_list = [{'match':{'uid':item}} for item in uid_list]
+    nest_body_list = [{'match':{'uid':k}} for k in uid_list]
     query = [{'bool':{'should': nest_body_list}}]
     try:
         portrait_result = es_text_profile.search(index='flow_text_'+date, doc_type='text', body={'query':{'bool':{'must':query}}, 'size':MAX_SIZE})['hits']['hits']
     except:
         portrait_result = []
 
-    se_result = dict()
-    text_result = dict()
     for item in portrait_result:
         source = item['_source']
         uid = source['uid'].encode('utf-8')
         text = source['text'].encode('utf-8')
         sentiment = source['sentiment']
         timestamp = source['timestamp']
-        if se_result.has_key(uid):
-            row = se_result[uid]
-            row.append(sentiment)
-            se_result[uid] = row
-        else:
-            row = []
-            row.append(sentiment)
-            se_result[uid] = row
-
-        if text_result.has_key(uid):
-            row = text_result[uid]
-            row = row + '_' + text
-            text_result[uid] = row
-        else:
-            row = text
-            text_result[uid] = row 
+        result.append([uid,text,sentiment,timestamp])
        
-    return se_result,text_result
+    return result  
 
-#以下函数仅作测试使用
-def search_test(uid_list, date):
+#根据uid和date查询用户发布的文本，此接口表示没有计算每条微博的情绪或者情绪计算不准确
+def search_text(uid_list, date, result):
     '''
     输入：uid列表、时间
     输出：情绪list、文本list
     '''
-    nest_body_list = [{'match':{'uid':item}} for item in uid_list]
+    nest_body_list = [{'match':{'uid':k}} for k in uid_list]
     query = [{'bool':{'should': nest_body_list}}]
     try:
         portrait_result = es_text_profile.search(index='flow_text_'+date, doc_type='text', body={'query':{'bool':{'must':query}}, 'size':MAX_SIZE})['hits']['hits']
     except:
         portrait_result = []
 
-    se_result = dict()
     for item in portrait_result:
         source = item['_source']
         uid = source['uid'].encode('utf-8')
         text = source['text'].encode('utf-8')
-        sentiment = source['sentiment']
         timestamp = source['timestamp']
-        if se_result.has_key(uid):
-            row = se_result[uid]
-            row.append([sentiment,text])
-            se_result[uid] = row
-        else:
-            row = []
-            row.append([sentiment,text])
-            se_result[uid] = row
+        result.append([uid,text,timestamp])
        
-    return se_result    
+    return result 
